@@ -2,7 +2,7 @@
 
 A Discord-based RAT written in Go (Golang).
 
-## Screenshot
+## Preview
 
 <img src="https://github.com/user-attachments/assets/e0b391a6-4fc9-4cb5-8cf2-f32cbd6e1aa7" width="300" length="300">
 
